@@ -2,7 +2,7 @@
 
 Hybrid sentiment system architecture 
 
-# Hybrid Sentiment Analysis System for Hedge Fund
+# Hybrid Sentiment Analysis System 
 ## Architecture & Implementation Guide
 
 ---
