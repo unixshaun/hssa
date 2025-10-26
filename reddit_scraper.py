@@ -1,5 +1,3 @@
-# reddit_scraper.py
-
 #!/usr/bin/python env
 
 import praw
