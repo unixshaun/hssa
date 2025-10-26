@@ -1,0 +1,112 @@
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # PostgreSQL + TimescaleDB
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_DB: sentiment_db
+      POSTGRES_USER: sentiment_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # Licensed data ingester
+  licensed_ingester:
+    build: ./services/licensed_ingester
+    environment:
+      SMA_API_KEY: ${SMA_API_KEY}
+      RAVENPACK_API_KEY: ${RAVENPACK_API_KEY}
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+    depends_on:
+      - timescaledb
+      - redis
+    restart: always
+
+  # Reddit scraper
+  reddit_scraper:
+    build: ./services/reddit_scraper
+    environment:
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET}
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+    depends_on:
+      - timescaledb
+    restart: always
+
+  # Discord bot
+  discord_bot:
+    build: ./services/discord_bot
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+    depends_on:
+      - timescaledb
+    restart: always
+
+  # Sentiment processing pipeline
+  sentiment_processor:
+    build: ./services/sentiment_processor
+    environment:
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - timescaledb
+      - redis
+    restart: always
+    deploy:
+      replicas: 3  # Scale based on load
+
+  # API server
+  api_server:
+    build: ./services/api
+    ports:
+      - "8000:8000"
+    environment:
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+      REDIS_URL: redis://redis:6379
+      API_KEYS: ${API_KEYS}
+    depends_on:
+      - timescaledb
+      - redis
+    restart: always
+
+  # Dashboard
+  dashboard:
+    build: ./services/dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      API_URL: http://api_server:8000
+    depends_on:
+      - api_server
+    restart: always
+
+  # Alerting service
+  alerting:
+    build: ./services/alerting
+    environment:
+      DB_URL: postgresql://sentiment_user:${DB_PASSWORD}@timescaledb:5432/sentiment_db
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    depends_on:
+      - timescaledb
+    restart: always
+
+volumes:
+  timescale_data:
+```
