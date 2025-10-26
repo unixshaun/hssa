@@ -1,4 +1,4 @@
-# hssa
+# HSSA
 
 Hybrid sentiment system architecture · MD
 Copy
