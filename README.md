@@ -1,7 +1,6 @@
 # HSSA
 
-Hybrid sentiment system architecture · MD
-Copy
+Hybrid sentiment system architecture 
 
 # Hybrid Sentiment Analysis System for Hedge Fund
 ## Architecture & Implementation Guide
