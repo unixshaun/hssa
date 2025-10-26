@@ -26,7 +26,7 @@ This document outlines a production-ready hybrid sentiment analysis system that 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    DATA INGESTION LAYER                      │
+│                    DATA INGESTION LAYER                     │
 ├──────────────────────┬──────────────────────────────────────┤
 │   LICENSED DATA      │        CUSTOM SCRAPERS               │
 │   - RavenPack API    │   - Reddit (specific subs)           │
@@ -37,9 +37,9 @@ This document outlines a production-ready hybrid sentiment analysis system that 
 └──────────────────────┴──────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                  DATA PROCESSING PIPELINE                    │
+│                  DATA PROCESSING PIPELINE                   │
 ├─────────────────────────────────────────────────────────────┤
-│  • Entity Recognition (ticker extraction)                    │
+│  • Entity Recognition (ticker extraction)                   │
 │  • Sentiment Analysis (FinBERT, custom models)              │
 │  • Spam/Bot Filtering                                       │
 │  • Deduplication                                            │
@@ -47,7 +47,7 @@ This document outlines a production-ready hybrid sentiment analysis system that 
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   AGGREGATION & INDICES                      │
+│                   AGGREGATION & INDICES                     │
 ├─────────────────────────────────────────────────────────────┤
 │  • Fear & Greed Index                                       │
 │  • Ticker-Specific Sentiment Scores                         │
@@ -57,7 +57,7 @@ This document outlines a production-ready hybrid sentiment analysis system that 
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    DATA ACCESS LAYER                         │
+│                    DATA ACCESS LAYER                        │
 ├─────────────────────────────────────────────────────────────┤
 │  • REST API                                                 │
 │  • WebSocket (real-time feeds)                              │
