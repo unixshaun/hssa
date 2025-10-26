@@ -1,0 +1,69 @@
+CREATE TABLE sentiment_data (
+    id BIGSERIAL,
+    timestamp TIMESTAMPTZ NOT NULL,
+    platform VARCHAR(50) NOT NULL,
+    source_type VARCHAR(20) NOT NULL,  -- 'licensed' or 'custom'
+    content TEXT,
+    author VARCHAR(255),
+    tickers TEXT[],  -- Array of ticker symbols
+    sentiment_score FLOAT,  -- -1 to +1
+    sentiment_label VARCHAR(20),  -- positive/negative/neutral
+    confidence FLOAT,
+    volume_metric INT,  -- likes, upvotes, views, etc.
+    metadata JSONB,  -- Flexible storage for platform-specific data
+    is_spam BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (timestamp, id)
+);
+
+-- Convert to hypertable for efficient time-series queries
+SELECT create_hypertable('sentiment_data', 'timestamp');
+
+-- Indexes
+CREATE INDEX idx_sentiment_tickers ON sentiment_data USING GIN(tickers);
+CREATE INDEX idx_sentiment_platform ON sentiment_data(platform, timestamp DESC);
+CREATE INDEX idx_sentiment_score ON sentiment_data(timestamp DESC, sentiment_score);
+
+-- Aggregated ticker sentiment (materialized view, updated every 5 min)
+CREATE MATERIALIZED VIEW ticker_sentiment_hourly AS
+SELECT 
+    time_bucket('1 hour', timestamp) AS bucket,
+    unnest(tickers) AS ticker,
+    platform,
+    AVG(sentiment_score) AS avg_sentiment,
+    COUNT(*) AS mention_count,
+    STDDEV(sentiment_score) AS sentiment_volatility
+FROM sentiment_data
+WHERE is_spam = FALSE
+GROUP BY bucket, ticker, platform;
+
+CREATE INDEX idx_ticker_sentiment_ticker ON ticker_sentiment_hourly(ticker, bucket DESC);
+
+-- Fear & Greed Index history
+CREATE TABLE fear_greed_index (
+    timestamp TIMESTAMPTZ PRIMARY KEY,
+    index_value FLOAT NOT NULL,  -- 0-100
+    interpretation VARCHAR(50),
+    components JSONB  -- Store individual component scores
+);
+
+-- Unusual activity alerts
+CREATE TABLE unusual_activity_log (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMPTZ NOT NULL,
+    ticker VARCHAR(10) NOT NULL,
+    alert_type VARCHAR(50),  -- 'volume_spike', 'sentiment_shift', etc.
+    severity VARCHAR(20),  -- 'low', 'medium', 'high'
+    details JSONB,
+    notified BOOLEAN DEFAULT FALSE
+);
+
+-- Data quality monitoring
+CREATE TABLE scraper_health (
+    timestamp TIMESTAMPTZ NOT NULL,
+    scraper_name VARCHAR(100),
+    status VARCHAR(20),  -- 'healthy', 'degraded', 'down'
+    records_processed INT,
+    error_rate FLOAT,
+    latency_ms INT,
+    metadata JSONB
+);
