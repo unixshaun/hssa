@@ -1,5 +1,4 @@
-#!/usr/bin/python env
-
+#!/usr/bin/env python
 import praw
 from datetime import datetime, timedelta
 
